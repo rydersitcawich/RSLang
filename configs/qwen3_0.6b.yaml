@@ -1,0 +1,4 @@
+model_id: Qwen/Qwen3-0.6B
+device: mps            # fall back to cpu if unavailable
+test_dtype: float32    # correctness tests
+bench_dtype: float16   # performance benchmarks
