@@ -1,0 +1,39 @@
+
+Qwen/Qwen3-0.6B  device=mps (Apple M2, 16 GB unified memory)  dtype=float16  new_tokens=256  warm_runs=10
+weights 1.19 GB, KV 114688 B/token, roofline uses SPEC peak 100 GB/s (not measured), load 1.83s
+
+--- prompt 0 (15 tokens) ---
+cold  : TTFT    344.7 ms | ITL mean   16.9 ms |   59.3 tok/s
+warm  : TTFT median     43.1 ms (mean 42.8)
+        ITL  median  16.87 ms (mean of medians 16.86)
+        decode tok/s median 59.4 (mean 59.3) | wall tok/s median 59.0
+        decode tok/s per run, chronological: [58.4, 59.5, 59.5, 59.2, 59.4, 59.3, 59.5, 59.4, 59.4, 59.4]
+        decode tok/s per run, sorted       : [58.4, 59.2, 59.3, 59.4, 59.4, 59.4, 59.4, 59.5, 59.5, 59.5]
+        ITL by position (warm, median across runs):
+          ITL idx    ctx    ITL ms   tok/s   roofline   measured/roofline
+            0-32       31    16.27    61.5      83.6         0.73
+           32-64       63    16.44    60.8      83.4         0.73
+           64-96       95    16.59    60.3      83.1         0.72
+           96-128     127    16.74    59.7      82.9         0.72
+          128-160     159    16.93    59.1      82.6         0.71
+          160-192     191    17.00    58.8      82.4         0.71
+          192-224     223    17.16    58.3      82.1         0.71
+          224-255     254    17.27    57.9      81.9         0.71
+
+--- prompt 1 (136 tokens) ---
+cold  : TTFT    119.3 ms | ITL mean   17.4 ms |   57.6 tok/s
+warm  : TTFT median    117.2 ms (mean 117.4)
+        ITL  median  17.36 ms (mean of medians 17.37)
+        decode tok/s median 57.6 (mean 57.5) | wall tok/s median 56.3
+        decode tok/s per run, chronological: [57.6, 57.5, 57.7, 57.6, 57.6, 57.6, 57.5, 57.6, 56.8, 57.5]
+        decode tok/s per run, sorted       : [56.8, 57.5, 57.5, 57.5, 57.6, 57.6, 57.6, 57.6, 57.6, 57.7]
+        ITL by position (warm, median across runs):
+          ITL idx    ctx    ITL ms   tok/s   roofline   measured/roofline
+            0-32      152    16.89    59.2      82.7         0.72
+           32-64      184    17.02    58.8      82.4         0.71
+           64-96      216    17.16    58.3      82.2         0.71
+           96-128     248    17.29    57.8      81.9         0.71
+          128-160     280    17.43    57.4      81.7         0.70
+          160-192     312    17.53    57.1      81.4         0.70
+          192-224     344    17.67    56.6      81.2         0.70
+          224-255     376    17.79    56.2      81.0         0.69

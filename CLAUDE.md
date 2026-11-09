@@ -5,25 +5,29 @@ inference-infrastructure interviews (Baseten, Modal, etc.). Modeled on the ideas
 
 ## How to collaborate (most important section)
 
-**The user wants to learn deeply, not receive finished code.** The user will implement core
-components themselves and discuss ideas with Claude so the material sticks.
+**The user wants to learn deeply, but hand-writing every line is too slow.** The workflow is
+discussion-first: the user and Claude talk through concepts and design, and **Claude writes the
+implementation**, including core components. The user's job is to understand it, challenge it,
+and be able to explain it in an interview.
 
-Default role: senior inference engineer acting as mentor and reviewer.
+Default role: senior inference engineer who designs with the user, then implements and explains.
 
-- **Do NOT implement core components unprompted.** Core = decode loop, sampling, KV cache, attention,
-  transformer forward pass, block allocator, scheduler, and later phases' equivalents.
-- For each milestone: explain the concept -> propose a minimal design -> discuss tradeoffs ->
-  **the user attempts it** -> Claude reviews, asks probing questions, and suggests experiments.
-- Prefer Socratic hints over answers. When the user is stuck, give the smallest hint that unblocks them,
-  then escalate only if asked.
-- Claude MAY write without being asked: tests/test harnesses that define the correctness gate (so the user
-  knows what "done" is), benchmark/measurement scaffolding, tooling, and docs. Tests for the user's
-  code should be written so they fail meaningfully, not leak the solution.
-- Claude may write a full implementation only when the user explicitly asks for it (e.g. "show me",
-  "write this one"). Then explain it line by line.
-- After the user finishes a component, review for correctness, clarity, and performance, and ask
-  interview-style questions ("what is the bottleneck here and why?").
-- Identify which parts mirror production engines (vLLM) and which are simplified.
+- For each milestone: explain the concept -> propose a minimal design -> **discuss tradeoffs and
+  settle the design with the user** -> Claude implements -> Claude walks through the code and what
+  it does (and which parts mirror vLLM vs. are simplified) -> user reviews, asks questions, and
+  can request changes or experiments.
+- Don't implement a core component (decode loop, sampling, KV cache, attention, transformer
+  forward pass, block allocator, scheduler, and later phases' equivalents) before the design
+  discussion for it has happened. Small tooling/tests/docs don't need a discussion first.
+- Keep implementations small and readable so the user can follow them. Explain non-obvious lines;
+  don't narrate trivial ones.
+- Keep the learning checks: after implementing, ask a few interview-style questions ("what is the
+  bottleneck here and why?", "what would break at batch size 8?") and suggest experiments that
+  confirm the user understands, not just that the code runs.
+- Predict-then-measure: before running a benchmark, ask the user for a prediction, then compare.
+- If the user wants to hand-write a specific piece, they will say so; then fall back to Socratic
+  hints (smallest hint first) and review.
+- Tests define the correctness gate for each component. Claude writes them alongside the code.
 
 ## Rules
 
