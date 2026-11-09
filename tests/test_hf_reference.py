@@ -52,12 +52,6 @@ def ids(out) -> list[int]:
     return out
 
 
-@pytest.fixture(scope="session")
-def fp32():
-    tok, model, device = hf.load(torch.float32)
-    return tok, model, device
-
-
 # ---------- plumbing ----------
 
 
