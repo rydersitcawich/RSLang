@@ -19,6 +19,7 @@ from pathlib import Path
 import torch
 import transformers
 import yaml
+from huggingface_hub import snapshot_download
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
 from transformers.generation.streamers import BaseStreamer
@@ -33,6 +34,7 @@ PROMPTS: list[str] = ["Explain the difference between supervised and unsupervise
 
 NUM_RUNS = 10  # warm runs per prompt, after one extra "cold" run that is recorded separately
 BENCH_NEW_TOKENS = 256  # long enough that ITL-vs-position shows the KV-cache effect
+GOLDEN_NEW_TOKENS = 64  # tokens per prompt in the golden file M2 must reproduce
 WINDOW = 32  # decode tokens per window in the ITL-vs-position table
 
 # Spec-sheet peak for Apple M2 unified memory (NOT measured; real achievable is lower).
@@ -251,10 +253,38 @@ def print_summary(raw: dict, stats: dict) -> None:
 # ---------------------------------------------------------------------------
 
 
-def cmd_golden() -> None:
-    """fp32 greedy token ids for each prompt -> GOLDEN_PATH.
-    Record: prompts, token ids, generation params, model revision, torch/transformers versions."""
-    raise NotImplementedError
+def cmd_golden(new_tokens: int) -> None:
+    """fp32 greedy token ids for each prompt -> GOLDEN_PATH. This is the M2 correctness target.
+
+    fp32 (not fp16) so near-tied logits don't flip the argmax from rounding noise.
+    Generated on MPS; a different device/torch build could in principle break a tie differently.
+    """
+    dtype = getattr(torch, CONFIG["test_dtype"])
+    tok, model, device = load(dtype)
+    cases = []
+    for prompt in PROMPTS:
+        cases.append({
+            "prompt": prompt,
+            "prompt_token_ids": tok(prompt)["input_ids"],
+            "new_token_ids": generate_greedy(model, tok, prompt, new_tokens, device),
+        })
+    golden = {
+        "model_id": CONFIG["model_id"],
+        # The cached snapshot dir is named after the HF commit hash it was downloaded at.
+        "model_revision": Path(snapshot_download(CONFIG["model_id"], local_files_only=True)).name,
+        "dtype": CONFIG["test_dtype"],
+        "device": device,
+        "torch": torch.__version__,
+        "transformers": transformers.__version__,
+        "max_new_tokens": new_tokens,
+        "generation": {"do_sample": False, "min_new_tokens": new_tokens, "max_new_tokens": new_tokens},
+        "cases": cases,
+    }
+    GOLDEN_PATH.parent.mkdir(parents=True, exist_ok=True)
+    GOLDEN_PATH.write_text(json.dumps(golden, indent=2))
+    print(f"saved {GOLDEN_PATH}")
+    for i, c in enumerate(cases):
+        print(f"prompt {i}: {tok.decode(c['new_token_ids'])!r}")
 
 
 def cmd_bench(runs: int, new_tokens: int, out: Path) -> None:
@@ -316,9 +346,10 @@ def main() -> None:
     p.add_argument("--runs", type=int, default=NUM_RUNS)
     p.add_argument("--new-tokens", type=int, default=BENCH_NEW_TOKENS)
     p.add_argument("--out", type=Path, default=PERF_PATH)
+    p.add_argument("--golden-tokens", type=int, default=GOLDEN_NEW_TOKENS)
     args = p.parse_args()
     if args.mode == "golden":
-        cmd_golden()
+        cmd_golden(args.golden_tokens)
     elif args.mode == "bench":
         cmd_bench(args.runs, args.new_tokens, args.out)
     else:
